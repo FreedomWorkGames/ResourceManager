@@ -1,2 +1,9 @@
 Library/
 .vs/
+Temp/
+*.csproj
+*.csproj
+ResourceManager.csproj
+ResourceManager.Editor.csproj
+ResourceManager.Editor.csproj
+ResourceManager.csproj
