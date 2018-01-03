@@ -18,10 +18,14 @@ public enum ELoadTaskState
 public class LoadTaskBase
 {
     protected string url;
-    protected AsyncOperation _asyncOperation;
+    public AsyncOperation asyncOperation
+    {
+        protected set;
+        get;
+    }
     protected ELoadTaskState _loadTaskState = ELoadTaskState.notStart;
-    public bool IsDone() { return _asyncOperation.isDone; }
-    public float GetProgress() { return _asyncOperation.progress; }
+    public bool IsDone() { return asyncOperation.isDone; }
+    public float GetProgress() { return asyncOperation.progress; }
     public virtual void BeginLoad(string url)
     {
         this.url = url;
@@ -52,6 +56,7 @@ public class LoadTaskRemote : LoadTask
     {
         base.BeginLoad(path);
         _unityWebRequest = UnityWebRequest.GetAssetBundle(url);
+        asyncOperation = _unityWebRequest.SendWebRequest();
     }
     public override bool IsError()
     {
@@ -66,12 +71,12 @@ public class LoadTaskFromLocalDisk : LoadTask
 {
     protected AssetBundleCreateRequest _request
     {
-        get { return _asyncOperation as AssetBundleCreateRequest; }
+        get { return asyncOperation as AssetBundleCreateRequest; }
     }
     public override void BeginLoad(string path)
     {
         base.BeginLoad(path);
-        _asyncOperation = AssetBundle.LoadFromFileAsync(url);
+        asyncOperation = AssetBundle.LoadFromFileAsync(url);
     }
     public override AssetBundle GetAssetBundle()
     {
