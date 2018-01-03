@@ -27,7 +27,7 @@ public class ResourceLoader
 }
 public class UrlCombine
 {
-    static public string GetRul(string path, bool loadFromServer)//
+    static public string GetRul(string path, uint version,bool loadFromServer)//
     {
         return path;
     }

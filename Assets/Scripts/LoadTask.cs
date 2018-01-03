@@ -1,3 +1,8 @@
+//  LoadTask.cs
+//  ResourceManager
+//
+//  Created by ZhangRuiHao on 1/3/2018.
+//
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,8 +20,8 @@ public class LoadTaskBase
     protected string url;
     protected AsyncOperation _asyncOperation;
     protected ELoadTaskState _loadTaskState = ELoadTaskState.notStart;
-    public  bool IsDone() { return _asyncOperation.isDone; }
-    public  float GetProgress() { return _asyncOperation.progress; }
+    public bool IsDone() { return _asyncOperation.isDone; }
+    public float GetProgress() { return _asyncOperation.progress; }
     public virtual void BeginLoad(string url)
     {
         this.url = url;
@@ -30,13 +35,13 @@ public class LoadTaskBase
     public Action<AssetBundle> loadFinishHandler;
 }
 
-public abstract class LoadTask:LoadTaskBase
+public abstract class LoadTask : LoadTaskBase
 {
     public abstract string GetError();
     public abstract bool IsError();
     public abstract AssetBundle GetAssetBundle();
 }
-public class LoadTaskFromServer : LoadTask
+public class LoadTaskRemote : LoadTask
 {
     UnityWebRequest _unityWebRequest;
     public override AssetBundle GetAssetBundle()
@@ -50,7 +55,7 @@ public class LoadTaskFromServer : LoadTask
     }
     public override bool IsError()
     {
-        return _unityWebRequest.isError;
+        return _unityWebRequest.isNetworkError;
     }
     public override string GetError()
     {
@@ -93,7 +98,7 @@ public class LoadTaskLoadManifest : LoadTaskFromLocalDisk
         base.SetEloadTaskState(state);
         if (_loadTaskState == state)
             return;
-        if(state == ELoadTaskState.finished && !IsError() && IsDone())
+        if (state == ELoadTaskState.finished && !IsError() && IsDone())
         {
             assetBundleManifest = GetAssetBundle().LoadAsset<AssetBundleManifest>("AssetBundleManifest");
         }
