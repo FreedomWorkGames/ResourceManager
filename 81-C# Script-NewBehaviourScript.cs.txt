@@ -1,0 +1,28 @@
+﻿//  #SCRIPTNAME##FILEEXTENSION#
+//  #PROJECTNAME#
+//
+//  Created by #SMARTDEVELOPERS# on #CREATIONDATE#.
+//
+using UnityEngine;
+
+
+public class #SCRIPTNAME# : MonoBehaviour
+{
+    public Transform transformCahed
+    {
+        private set;
+        get;
+    }	
+ 
+    // Use this for initialization
+    void Start()
+    {
+        transformCahed = this.transform;
+    }
+     
+    // Update is called once per frame
+    void Update()
+    {
+     
+    }
+}
