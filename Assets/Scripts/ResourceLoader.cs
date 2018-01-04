@@ -22,16 +22,18 @@ public class ResourceLoader
     }
     public void LoadRemoteAsset(string path, string md5, Action<UnityEngine.Object> assetHandler)
     {
-        string url = UrlCombine.GetRul(path, false);
+        string url = UrlCombine.GetLoadRul(path, false,Application.platform);
+        AddTask(url, ETaskType.loadRemoteAsset, assetHandler, md5);
     }
-    public void LoadLocalAsset(string path, Action<UnityEngine.Object> assetHandler)
+    public void LoadLocalAssetBundle(string path, Action<UnityEngine.Object> assetHandler)
     {
-        string url = UrlCombine.GetRul(path, true);
-
+        string url = UrlCombine.GetLoadRul(path, true, Application.platform);
+        AddTask(url, ETaskType.loadLocalAssetBundle, assetHandler);
     }
     public void LoadManiFest(string path, Action<UnityEngine.Object> assetHandler)
     {
-        string url = UrlCombine.GetRul(path, true);
+        string url = UrlCombine.GetLoadRul(path, true,Application.platform);
+        AddTask(url, ETaskType.loadMainManifest, assetHandler);
     }
     public void RemoveTask(string url)
     {
@@ -41,14 +43,28 @@ public class ResourceLoader
             RemoveTask(loadTask);
         }
     }
-    protected void CreateNewTask(string url, Action<UnityEngine.Object> assetHandler)
+    private bool CombineTask(string url, Action<UnityEngine.Object> assetHandler)
     {
+        if (_taskDictionary.ContainsKey(url))
+        {
+            _taskDictionary[url].loadFinishHandler += assetHandler;
+            return true;
+        }
+        return false;
     }
-    private void AddNewTask(LoadTask task, Action<AssetBundle> finishedHandler)
+    private void AddTask(string url, ETaskType taskType, Action<UnityEngine.Object> assetHandler, string md5 = "")
     {
-        if (!_taskDictionary.ContainsKey(task.url))
-            _taskDictionary.Add(task.url, task);
-        _todoTasks.Add(task);
+        LoadTask task = null;
+        if (_taskDictionary.TryGetValue(url, out task))
+        {
+            CombineTask(url, assetHandler);
+        }
+        else
+        {
+            task = LoadTaskFactory.GetLoadTask(url, taskType, md5);
+            _taskDictionary.Add(url, task);
+            _todoTasks.Add(task);
+        }
     }
 
     private void RemoveTask(LoadTask loadTask)
@@ -69,8 +85,23 @@ public class ResourceLoader
 }
 public class UrlCombine
 {
-    static public string GetRul(string path, bool loadFromServer)//
+    //每个平台的资源根目录都是枚举字符串
+    static public string GetLoadRul(string path, bool loadFromServer, RuntimePlatform platformType )//
     {
-        return path;
+        string serverName = "http:///myServer.com/";
+        System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder(platformType.ToString(),100);
+        stringBuilder.Append(@"/");
+        stringBuilder.Append(@path);
+         if(loadFromServer)
+        {
+            stringBuilder.Insert(0, serverName);
+        }
+         else
+        {
+            //客户端应该有一个表，根据path，可以查到在包内还是包外,热更新之后就会在包外了
+            bool isInApp = false;
+            stringBuilder.Insert(0, isInApp ? Application.dataPath : Application.persistentDataPath);
+        }
+        return stringBuilder.ToString();
     }
 }

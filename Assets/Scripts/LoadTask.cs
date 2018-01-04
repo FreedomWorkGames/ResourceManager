@@ -85,7 +85,7 @@ public abstract class LoadAssetBundleTask : LoadTask
         }
     }
 }
-public class LoadTaskRemote : LoadTask
+public class LoadRemteTask : LoadTask
 {
     UnityWebRequest _unityWebRequest;
     public byte[] data
@@ -98,7 +98,7 @@ public class LoadTaskRemote : LoadTask
         get;//用于下载完成后，检测完整性使用
         protected set;
     }
-    public LoadTaskRemote(string url, string md5) : base(url)
+    public LoadRemteTask(string url, string md5) : base(url)
     {
         //System.Security.Cryptography.MD5.Create();
         this.md5 = md5;
@@ -181,9 +181,9 @@ public class LoadAssetBundleFromDiskTask : LoadAssetBundleTask
        
     }
 }
-public class LoadTaskLoadManifest : LoadAssetBundleFromDiskTask
+public class LoadManifestTask : LoadAssetBundleFromDiskTask
 {
-    public LoadTaskLoadManifest(string url) : base(url)
+    public LoadManifestTask(string url) : base(url)
     {
 
     }

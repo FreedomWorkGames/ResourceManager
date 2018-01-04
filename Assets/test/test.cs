@@ -20,7 +20,7 @@ public class test : MonoBehaviour
     void Start()
     {
         transformCahed = this.transform;
-        _loadTask = new LoadTaskRemote(System.IO.Path.Combine(Application.dataPath, @"AssetBundles/AssetBundless"),"");
+        _loadTask = new LoadRemteTask(System.IO.Path.Combine(Application.dataPath, @"AssetBundles/AssetBundless"),"");
         _loadTask.BeginLoad();
     }
      void  CheckLoadTask(LoadTask loadTask)//test hascode
