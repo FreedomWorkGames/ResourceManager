@@ -15,48 +15,98 @@ public enum ELoadTaskState
     loading,
     finished,
 }
-public class LoadTaskBase
+public abstract class LoadTask 
 {
-    protected string url;
+    public string url
+    {
+        get;
+        private set;
+    }
     public AsyncOperation asyncOperation
     {
         protected set;
         get;
     }
-    protected ELoadTaskState _loadTaskState = ELoadTaskState.notStart;
-    public bool IsDone() { return asyncOperation.isDone; }
-    public float GetProgress() { return asyncOperation.progress; }
-    public virtual void BeginLoad(string url)
+    public ELoadTaskState loadTaskState
+    {
+        protected set;
+        get;
+    }
+    public Action<UnityEngine.Object> loadFinishHandler;
+
+    public LoadTask(string url)
     {
         this.url = url;
+        SetEloadTaskState(ELoadTaskState.notStart);
     }
-    public virtual void SetEloadTaskState(ELoadTaskState state)
+    public bool IsDone() { return asyncOperation.isDone; }
+    public float GetProgress() { return asyncOperation.progress; }
+    public virtual void BeginLoad()
     {
-        if (_loadTaskState == state)
-            return;
-        _loadTaskState = state;
     }
-    public Action<AssetBundle> loadFinishHandler;
-}
-
-public abstract class LoadTask : LoadTaskBase
-{
+    public void SetEloadTaskState(ELoadTaskState state)
+    {
+        if (loadTaskState == state)
+            return;
+        loadTaskState = state;
+    }
+    public virtual void OnLoadComplete()
+    {
+        SetEloadTaskState(ELoadTaskState.finished);
+        if (IsError())
+        {
+            Debug.Log("LoadTask Error: " + GetError());
+            return;
+        }
+    }
+    public abstract void Release();
     public abstract string GetError();
     public abstract bool IsError();
-    public abstract AssetBundle GetAssetBundle();
+}
+public abstract class LoadAssetBundleTask : LoadTask
+{
+    //public Action<AssetBundle> loadFinishHandler;
+    public LoadAssetBundleTask(string url) : base(url)
+    { }
+    public abstract AssetBundle GetAssetBndle();
+    public override void OnLoadComplete()
+    {
+        base.OnLoadComplete();
+        if (IsDone() && loadFinishHandler != null)
+            loadFinishHandler(GetAssetBndle());
+    }
 }
 public class LoadTaskRemote : LoadTask
 {
     UnityWebRequest _unityWebRequest;
-    public override AssetBundle GetAssetBundle()
+    public byte[] data
     {
-        return DownloadHandlerAssetBundle.GetContent(_unityWebRequest);
+        get;
+        protected set;
     }
-    public override void BeginLoad(string path)
+    public string md5
     {
-        base.BeginLoad(path);
-        _unityWebRequest = UnityWebRequest.GetAssetBundle(url);
+        get;//用于下载完成后，检测完整性使用
+        protected set;
+    }
+    public LoadTaskRemote(string url, string md5) : base(url)
+    {
+        //System.Security.Cryptography.MD5.Create();
+        this.md5 = md5;
+    }
+    //public override AssetBundle GetData()
+    //{
+    //    return AssetBundle.LoadFromMemory(_unityWebRequest.downloadHandler.data); //DownloadHandlerAssetBundle.GetContent(_unityWebRequest);
+    //}
+    public override void BeginLoad()
+    {
+        base.BeginLoad();
+        _unityWebRequest = UnityWebRequest.Get(url);
+#if UNITY_2017_3_OR_NEWER
         asyncOperation = _unityWebRequest.SendWebRequest();
+#else
+        asyncOperation = _unityWebRequest.Send();
+#endif
     }
     public override bool IsError()
     {
@@ -66,46 +116,76 @@ public class LoadTaskRemote : LoadTask
     {
         return _unityWebRequest.error;
     }
+    public override void OnLoadComplete()
+    {
+        base.OnLoadComplete();
+        if (!IsError() && IsDone())
+        {
+            data = _unityWebRequest.downloadHandler.data;
+        }
+    }
+    public override void Release()
+    {
+        if(IsDone())//测试证明，error后isOone为true
+        {
+            _unityWebRequest.Dispose();
+        }
+        else
+        {
+            _unityWebRequest.Abort();
+        }
+    }
 }
-public class LoadTaskFromLocalDisk : LoadTask
+public class LoadTaskFromLocalDisk : LoadAssetBundleTask
 {
+    public LoadTaskFromLocalDisk(string url) : base(url)
+    {
+
+    }
     protected AssetBundleCreateRequest _request
     {
         get { return asyncOperation as AssetBundleCreateRequest; }
     }
-    public override void BeginLoad(string path)
+    public override void BeginLoad()
     {
-        base.BeginLoad(path);
+        base.BeginLoad();
         asyncOperation = AssetBundle.LoadFromFileAsync(url);
     }
-    public override AssetBundle GetAssetBundle()
+    public override AssetBundle GetAssetBndle()
     {
         return _request.assetBundle;
     }
     public override bool IsError()
     {
-        return IsDone() && GetAssetBundle() == null;
+        return IsDone() && GetAssetBndle() == null;
     }
     public override string GetError()
     {
         return url + " is not exist in local disk";
     }
+    public override void Release()
+    {
+       
+    }
 }
 public class LoadTaskLoadManifest : LoadTaskFromLocalDisk
 {
+    public LoadTaskLoadManifest(string url) : base(url)
+    {
+
+    }
     public AssetBundleManifest assetBundleManifest
     {
         get;
         private set;
     }
-    public override void SetEloadTaskState(ELoadTaskState state)
+    public override void OnLoadComplete()
     {
-        base.SetEloadTaskState(state);
-        if (_loadTaskState == state)
-            return;
-        if (state == ELoadTaskState.finished && !IsError() && IsDone())
+        base.OnLoadComplete();
+        if (!IsError() && IsDone())
         {
-            assetBundleManifest = GetAssetBundle().LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+            AssetBundle assetBundle = GetAssetBndle();
+            assetBundleManifest = assetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
         }
     }
 }
