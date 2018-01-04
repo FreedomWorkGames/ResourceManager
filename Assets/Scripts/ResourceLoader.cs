@@ -20,36 +20,37 @@ public class ResourceLoader
         _loadingTasks = new List<LoadTask>();
         _taskDictionary = new Dictionary<string, LoadTask>();
     }
-    public void LoadRemoteAsset(string path,string md5)
+    public void LoadRemoteAsset(string path, string md5, Action<UnityEngine.Object> assetHandler)
     {
         string url = UrlCombine.GetRul(path, false);
     }
-    public void LoadLocalAsset(string path)
+    public void LoadLocalAsset(string path, Action<UnityEngine.Object> assetHandler)
     {
         string url = UrlCombine.GetRul(path, true);
 
     }
+    public void LoadManiFest(string path, Action<UnityEngine.Object> assetHandler)
+    {
+        string url = UrlCombine.GetRul(path, true);
+    }
     public void RemoveTask(string url)
     {
         LoadTask loadTask = null;
-        if(_taskDictionary.TryGetValue(url,out loadTask))
+        if (_taskDictionary.TryGetValue(url, out loadTask))
         {
             RemoveTask(loadTask);
         }
     }
-    private void AddNewTask(LoadTask task,Action<AssetBundle> finishedHandler)
+    protected void CreateNewTask(string url, Action<UnityEngine.Object> assetHandler)
     {
-        if(_taskDictionary.ContainsKey(task.url))
-        {
-           // _taskDictionary[task.url].OnLoadComplete
-        }
-        else
-        {
-            _taskDictionary.Add(task.url, task);
-            _todoTasks.Add(task);
-        }
-
     }
+    private void AddNewTask(LoadTask task, Action<AssetBundle> finishedHandler)
+    {
+        if (!_taskDictionary.ContainsKey(task.url))
+            _taskDictionary.Add(task.url, task);
+        _todoTasks.Add(task);
+    }
+
     private void RemoveTask(LoadTask loadTask)
     {
         switch (loadTask.loadTaskState)
