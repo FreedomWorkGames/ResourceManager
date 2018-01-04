@@ -65,6 +65,11 @@ public abstract class LoadTask
 }
 public abstract class LoadAssetBundleTask : LoadTask
 {
+    public AssetBundle assetBundle
+    {
+        get;
+        private set;
+    }
     //public Action<AssetBundle> loadFinishHandler;
     public LoadAssetBundleTask(string url) : base(url)
     { }
@@ -72,8 +77,12 @@ public abstract class LoadAssetBundleTask : LoadTask
     public override void OnLoadComplete()
     {
         base.OnLoadComplete();
-        if (IsDone() && loadFinishHandler != null)
-            loadFinishHandler(GetAssetBndle());
+
+        if (IsDone() && !IsError())
+        {
+            assetBundle = GetAssetBndle();
+            loadFinishHandler(assetBundle);
+        }
     }
 }
 public class LoadTaskRemote : LoadTask
@@ -136,9 +145,9 @@ public class LoadTaskRemote : LoadTask
         }
     }
 }
-public class LoadTaskFromLocalDisk : LoadAssetBundleTask
+public class LoadAssetBundleFromDiskTask : LoadAssetBundleTask
 {
-    public LoadTaskFromLocalDisk(string url) : base(url)
+    public LoadAssetBundleFromDiskTask(string url) : base(url)
     {
 
     }
@@ -163,12 +172,16 @@ public class LoadTaskFromLocalDisk : LoadAssetBundleTask
     {
         return url + " is not exist in local disk";
     }
+    public override void OnLoadComplete()
+    {
+        base.OnLoadComplete();
+    }
     public override void Release()
     {
        
     }
 }
-public class LoadTaskLoadManifest : LoadTaskFromLocalDisk
+public class LoadTaskLoadManifest : LoadAssetBundleFromDiskTask
 {
     public LoadTaskLoadManifest(string url) : base(url)
     {
