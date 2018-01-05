@@ -20,7 +20,7 @@ public abstract class LoadTask
     public string url
     {
         get;
-        private set;
+        protected set;
     }
     public AsyncOperation asyncOperation
     {
@@ -32,7 +32,7 @@ public abstract class LoadTask
         protected set;
         get;
     }
-    public Action<UnityEngine.Object> loadFinishHandler;
+    public Action<LoadTask> loadFinishHandler;
 
     public LoadTask(string url)
     {
@@ -63,50 +63,54 @@ public abstract class LoadTask
     public abstract string GetError();
     public abstract bool IsError();
 }
-public abstract class LoadAssetBundleTask : LoadTask
+public abstract class LoadTaskTemplate<T> : LoadTask
 {
-    public AssetBundle assetBundle
+    public T asset
     {
         get;
         private set;
     }
     //public Action<AssetBundle> loadFinishHandler;
-    public LoadAssetBundleTask(string url) : base(url)
+    public LoadTaskTemplate(string url) : base(url)
     { }
-    public abstract AssetBundle GetAssetBndle();
+    public abstract T GetAsset();
     public override void OnLoadComplete()
     {
         base.OnLoadComplete();
 
         if (IsDone() && !IsError())
         {
-            assetBundle = GetAssetBndle();
-            loadFinishHandler(assetBundle);
+            asset = GetAsset();
+            loadFinishHandler(this);
         }
     }
 }
-public class LoadRemteTask : LoadTask
+public abstract class LoadAssetBundleTask : LoadTaskTemplate<AssetBundle>
+{
+    public LoadAssetBundleTask(string url) : base(url)
+    { }
+    public override AssetBundle GetAsset()
+    {
+        throw new NotImplementedException();
+    }
+    public override void OnLoadComplete()
+    {
+        base.OnLoadComplete();
+    }
+}
+public class LoadRemoteTask : LoadTaskTemplate<byte[]>
 {
     UnityWebRequest _unityWebRequest;
-    public byte[] data
-    {
-        get;
-        protected set;
-    }
     public string md5
     {
         get;//用于下载完成后，检测完整性使用
         protected set;
     }
-    public LoadRemteTask(string url, string md5) : base(url)
+    public LoadRemoteTask(string url, string md5) : base(url)
     {
         //System.Security.Cryptography.MD5.Create();
         this.md5 = md5;
     }
-    //public override AssetBundle GetData()
-    //{
-    //    return AssetBundle.LoadFromMemory(_unityWebRequest.downloadHandler.data); //DownloadHandlerAssetBundle.GetContent(_unityWebRequest);
-    //}
     public override void BeginLoad()
     {
         base.BeginLoad();
@@ -125,16 +129,19 @@ public class LoadRemteTask : LoadTask
     {
         return _unityWebRequest.error;
     }
+    public override byte[] GetAsset()
+    {
+       return _unityWebRequest.downloadHandler.data;
+    }
     public override void OnLoadComplete()
     {
         base.OnLoadComplete();
-        if (!IsError() && IsDone())
-        {
-            data = _unityWebRequest.downloadHandler.data;
-        }
     }
     public override void Release()
     {
+        url = "";
+        md5 = "";
+        loadFinishHandler = null;
         if(IsDone())//测试证明，error后isOone为true
         {
             _unityWebRequest.Dispose();
@@ -160,13 +167,13 @@ public class LoadAssetBundleFromDiskTask : LoadAssetBundleTask
         base.BeginLoad();
         asyncOperation = AssetBundle.LoadFromFileAsync(url);
     }
-    public override AssetBundle GetAssetBndle()
+    public override AssetBundle GetAsset()
     {
         return _request.assetBundle;
     }
     public override bool IsError()
     {
-        return IsDone() && GetAssetBndle() == null;
+        return IsDone() && GetAsset() == null;
     }
     public override string GetError()
     {
@@ -178,7 +185,8 @@ public class LoadAssetBundleFromDiskTask : LoadAssetBundleTask
     }
     public override void Release()
     {
-       
+        url = "";
+        loadFinishHandler = null;
     }
 }
 public class LoadManifestTask : LoadAssetBundleFromDiskTask
@@ -194,11 +202,13 @@ public class LoadManifestTask : LoadAssetBundleFromDiskTask
     }
     public override void OnLoadComplete()
     {
-        base.OnLoadComplete();
+        SetEloadTaskState(ELoadTaskState.finished);
         if (!IsError() && IsDone())
         {
-            AssetBundle assetBundle = GetAssetBndle();
+            AssetBundle assetBundle = GetAsset();
             assetBundleManifest = assetBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+            if (loadFinishHandler != null)
+                loadFinishHandler(this);
         }
     }
 }

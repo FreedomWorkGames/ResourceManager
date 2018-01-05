@@ -19,7 +19,7 @@ public class LoadTaskFactory
         switch (taskType)
         {
             case ETaskType.loadRemoteAsset:
-                return new LoadRemteTask(url, md5);
+                return new LoadRemoteTask(url, md5);
                 break;
             case ETaskType.loadLocalAssetBundle:
                 return new LoadAssetBundleFromDiskTask(url);
