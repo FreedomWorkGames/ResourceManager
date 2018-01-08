@@ -23,30 +23,64 @@ public class ResourceLoader
     }
     public void LoadRemoteAsset(string path, string md5, Action<byte[]> assetHandler)
     {
-        string url = UrlCombine.GetLoadRul(path, true, Application.platform);
-        AddTask(url, ETaskType.loadRemoteAsset, (loadTask) =>
+        BeginTask(path, ETaskType.loadRemoteAsset, (loadTask) =>
         {
-            LoadRemoteTask task = loadTask as LoadRemoteTask;
-            assetHandler(task.asset);
+            if (assetHandler != null)
+            {
+                LoadRemoteTask task = loadTask as LoadRemoteTask;
+                assetHandler(task.asset);
+            }
         }, md5);
     }
     public void LoadLocalAssetBundle(string path, Action<AssetBundle> assetHandler)
     {
-        string url = UrlCombine.GetLoadRul(path, false, Application.platform);
-        AddTask(url, ETaskType.loadLocalAssetBundle, (loadTask)=>
+        BeginTask(path, ETaskType.loadLocalAssetBundle, (loadTask) =>
         {
-            LoadAssetBundleFromDiskTask task = loadTask as LoadAssetBundleFromDiskTask;
-            assetHandler(task.asset);
+            if (assetHandler != null)
+            {
+                LoadAssetBundleFromDiskTask task = loadTask as LoadAssetBundleFromDiskTask;
+                assetHandler(task.asset);
+            }
         }
         );
+    }
+    public void LoadLocalAssetBundle(string[] allPaths,Action<Dictionary<string,AssetBundle>> finishedHandler)
+    {
+        Dictionary<string, AssetBundle> allAssets = new Dictionary<string, AssetBundle>();
+        for(int i=0;i<allPaths.Length;i++)
+        {
+            string path = allPaths[i];
+            int index = i;
+            LoadLocalAssetBundle(path, (assetBundle) =>
+             {
+                 allAssets.Add(path, assetBundle);
+                 //check all asset is finished
+                 bool isAllFinished = true;
+                 for(int k=0;k<allPaths.Length;k++)
+                 {
+                     string callBackPath = allPaths[k];
+                     isAllFinished &= _taskDictionary.ContainsKey(callBackPath) && _taskDictionary[callBackPath].IsDone();
+                     if (!isAllFinished)
+                         break;
+                 }
+                 //end check (all asset is finished),do finishedHandler
+                 if (isAllFinished && finishedHandler != null)
+                 {
+                     finishedHandler(allAssets);
+                 }
+             });
+        }
     }
     public void LoadManiFest(string path, Action<AssetBundleManifest> assetHandler)
     {
         string url = UrlCombine.GetLoadRul(path, false, Application.platform);
         AddTask(url, ETaskType.loadMainManifest, (loadTask) =>
         {
-            LoadManifestTask task = loadTask as LoadManifestTask;
-            assetHandler(task.assetBundleManifest);
+            if (assetHandler != null)
+            {
+                LoadManifestTask task = loadTask as LoadManifestTask;
+                assetHandler(task.assetBundleManifest);
+            }
         });
 
     }
@@ -58,11 +92,21 @@ public class ResourceLoader
             RemoveTask(loadTask);
         }
     }
+    private void BeginTask(string path, ETaskType taskType,Action<LoadTask> finishedHandler,string md5="")
+    {
+        string url = UrlCombine.GetLoadRul(path, false, Application.platform);
+        AddTask(url, taskType, (loadTask) =>
+        {
+            if (finishedHandler != null)
+                finishedHandler(loadTask);
+        });
+    }
     private bool CombineTask(string url, Action<LoadTask> assetHandler)
     {
         if (_taskDictionary.ContainsKey(url))
         {
-            _taskDictionary[url].loadFinishHandler += assetHandler;
+            if (assetHandler != null)
+                _taskDictionary[url].loadFinishHandler += assetHandler;
             return true;
         }
         return false;

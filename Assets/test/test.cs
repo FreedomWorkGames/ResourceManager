@@ -38,7 +38,6 @@ public class test : MonoBehaviour
             loadTask.OnLoadComplete();
             var allAsset = (loadTask as LoadAssetBundleFromDiskTask).asset.GetAllAssetNames();
             var mainAsset = (loadTask as LoadAssetBundleFromDiskTask).asset.LoadAsset("test1");//
-            int i = 0;
         }
     }
     // Update is called once per frame

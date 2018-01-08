@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 3355104110
+CRC: 659823642
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d3f4b2d86a207859e99d4d77411abb77
+    Hash: 8135a8b1b1cbdd079a73c56235ded636
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 12f7c6a659c16ff58a3397c61a0a8ea7
+    Hash: 0615fdd8182050e228ba12bfa176028d
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -21,10 +21,9 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 43
   Script: {instanceID: 0}
-- Class: 48
-  Script: {instanceID: 0}
 - Class: 65
   Script: {instanceID: 0}
 Assets:
 - Assets/test/test.prefab
-Dependencies: []
+Dependencies:
+- F:/MyProjects/GitHub/ResourceManager/Assets/AssetBundles/material/test
