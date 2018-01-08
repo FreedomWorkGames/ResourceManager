@@ -15,7 +15,7 @@ public enum ELoadTaskState
     loading,
     finished,
 }
-public abstract class LoadTask 
+public abstract class LoadTask
 {
     public string url
     {
@@ -59,6 +59,10 @@ public abstract class LoadTask
             return;
         }
     }
+    public virtual bool IsAssetRight()//验证资源完整性
+    {
+        return true;
+    }
     public abstract void Release();
     public abstract string GetError();
     public abstract bool IsError();
@@ -81,7 +85,8 @@ public abstract class LoadTaskTemplate<T> : LoadTask
         if (IsDone() && !IsError())
         {
             asset = GetAsset();
-            loadFinishHandler(this);
+            if (loadFinishHandler != null)
+                loadFinishHandler(this);
         }
     }
 }
@@ -131,7 +136,7 @@ public class LoadRemoteTask : LoadTaskTemplate<byte[]>
     }
     public override byte[] GetAsset()
     {
-       return _unityWebRequest.downloadHandler.data;
+        return _unityWebRequest.downloadHandler.data;
     }
     public override void OnLoadComplete()
     {
@@ -142,7 +147,7 @@ public class LoadRemoteTask : LoadTaskTemplate<byte[]>
         url = "";
         md5 = "";
         loadFinishHandler = null;
-        if(IsDone())//测试证明，error后isOone为true
+        if (IsDone())//测试证明，error后isOone为true
         {
             _unityWebRequest.Dispose();
         }
@@ -150,6 +155,11 @@ public class LoadRemoteTask : LoadTaskTemplate<byte[]>
         {
             _unityWebRequest.Abort();
         }
+    }
+    public override bool IsAssetRight()
+    {
+        string assetMD5 = MD5Builder.BuildMD5(asset);
+        return string.Compare(assetMD5, this.md5) == 0;
     }
 }
 public class LoadAssetBundleFromDiskTask : LoadAssetBundleTask

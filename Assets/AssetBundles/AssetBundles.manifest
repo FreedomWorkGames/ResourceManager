@@ -1,7 +1,10 @@
 ManifestFileVersion: 0
-CRC: 2922776578
+CRC: 2689411178
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
       Name: test
+      Dependencies: {}
+    Info_1:
+      Name: aaa/test1
       Dependencies: {}

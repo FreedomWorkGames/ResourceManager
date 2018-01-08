@@ -12,7 +12,7 @@ public class BuildAssetBundlesWindow: Editor
    [MenuItem(buildAssetBundlesRoot+"build")]
    static void BuildAssetBundles()
     {
-        BuildPipeline.BuildAssetBundles(@"Assets/AssetBundles/", BuildAssetBundleOptions.None, BuildTarget.StandaloneWindows64);
+        BuildPipeline.BuildAssetBundles(@"Assets/AssetBundles/", BuildAssetBundleOptions.ForceRebuildAssetBundle, BuildTarget.StandaloneWindows64);
     }
     [MenuItem(buildAssetBundlesRoot+"testCrc")]
     static void TestCrc()

@@ -36,9 +36,13 @@ public class ResourceManager
         }
         else
         {
-            _resourceLoader.LoadLocalAssetBundle()
+            _resourceLoader.LoadLocalAssetBundle(path, (assetBundle) =>
+             {
+
+             });
         }
     }
+
     private void LoadResource(string path, Action<UnityEngine.Object> finishHandler)
     {
         if (!canWork)

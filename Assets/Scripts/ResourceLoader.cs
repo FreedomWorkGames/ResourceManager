@@ -11,7 +11,7 @@ using System;
 /// </summary>
 public class ResourceLoader
 {
-    private int _maxLoadingTaskCount = 10;
+    private int _maxLoadingTaskCount = 10;//如果为0，表示无限制
     private List<LoadTask> _todoTasks;
     private List<LoadTask> _loadingTasks;
     private Dictionary<string, LoadTask> _taskDictionary;//url作为key,对应loadTask
@@ -27,24 +27,28 @@ public class ResourceLoader
         AddTask(url, ETaskType.loadRemoteAsset, (loadTask) =>
         {
             LoadRemoteTask task = loadTask as LoadRemoteTask;
-            string assetMD5 = MD5Builder.BuildMD5(task.asset);
-            if (string.Compare(assetMD5, task.md5) != 0)//资源有损坏，重新下载
-            {
-                ReloadTask(task);
-            }
-            else
-                assetHandler(task.asset);
+            assetHandler(task.asset);
         }, md5);
     }
-    public void LoadLocalAssetBundle(string path, Action<UnityEngine.Object> assetHandler)
+    public void LoadLocalAssetBundle(string path, Action<AssetBundle> assetHandler)
     {
         string url = UrlCombine.GetLoadRul(path, false, Application.platform);
-        AddTask(url, ETaskType.loadLocalAssetBundle, assetHandler);
+        AddTask(url, ETaskType.loadLocalAssetBundle, (loadTask)=>
+        {
+            LoadAssetBundleFromDiskTask task = loadTask as LoadAssetBundleFromDiskTask;
+            assetHandler(task.asset);
+        }
+        );
     }
-    public void LoadManiFest(string path, Action<UnityEngine.Object> assetHandler)
+    public void LoadManiFest(string path, Action<AssetBundleManifest> assetHandler)
     {
         string url = UrlCombine.GetLoadRul(path, false, Application.platform);
-        AddTask(url, ETaskType.loadMainManifest, assetHandler);
+        AddTask(url, ETaskType.loadMainManifest, (loadTask) =>
+        {
+            LoadManifestTask task = loadTask as LoadManifestTask;
+            assetHandler(task.assetBundleManifest);
+        });
+
     }
     public void RemoveTask(string url)
     {
@@ -79,13 +83,13 @@ public class ResourceLoader
     }
     private void ReloadTask(LoadTask task)
     {
-        if (_taskDictionary.ContainsKey(task.url))
-            Debug.LogError("reloadTask is exist ,reloadTask need to delete before load again");
+        if (!_taskDictionary.ContainsKey(task.url))
+            Debug.LogError("reloadTask is not exist");
         else
         {
             task.SetEloadTaskState(ELoadTaskState.notStart);
-            _taskDictionary.Add(task.url, task);
             _todoTasks.Add(task);
+            _loadingTasks.Remove(task);
         }
     }
     private void RemoveTask(LoadTask loadTask)
@@ -106,23 +110,36 @@ public class ResourceLoader
 
     public void UpdateTask()
     {
-        if (_loadingTasks.Count < _maxLoadingTaskCount)
+        int toLoadCount = 0;
+        if (_maxLoadingTaskCount == 0)
+            toLoadCount = _todoTasks.Count;
+        else if (_loadingTasks.Count < _maxLoadingTaskCount)
         {
-            int toLoadCount = _maxLoadingTaskCount - _loadingTasks.Count;
+            toLoadCount = _maxLoadingTaskCount - _loadingTasks.Count;
+        }
+        if (toLoadCount > 0)
+        {
             var beingTaks = _todoTasks.GetRange(0, toLoadCount);
             for (int i = 0; i < beingTaks.Count; i++)
                 beingTaks[i].SetEloadTaskState(ELoadTaskState.loading);
             _loadingTasks.AddRange(beingTaks);
             _todoTasks.RemoveRange(0, toLoadCount);
         }
-        for(int i = 0;i<_loadingTasks.Count;i++)
+        for (int i = 0; i < _loadingTasks.Count; i++)
         {
             var task = _loadingTasks[i];
-            if(task.IsDone())
+            if (task.IsDone())
             {
-                _loadingTasks.RemoveAt(i);
-                task.OnLoadComplete();
-                i--;
+                if (task.IsAssetRight())
+                {
+                    task.OnLoadComplete();
+                    RemoveTask(task);
+                    i--;
+                }
+                else
+                {
+                    ReloadTask(task);
+                }
             }
         }
     }

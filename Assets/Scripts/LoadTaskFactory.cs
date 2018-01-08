@@ -20,13 +20,10 @@ public class LoadTaskFactory
         {
             case ETaskType.loadRemoteAsset:
                 return new LoadRemoteTask(url, md5);
-                break;
             case ETaskType.loadLocalAssetBundle:
                 return new LoadAssetBundleFromDiskTask(url);
-                break;
             case ETaskType.loadMainManifest:
                 return new LoadManifestTask(url);
-                break;
         }
         return null;
     }
