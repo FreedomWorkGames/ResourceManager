@@ -2,7 +2,7 @@
 //  ResourceManager
 //
 //  Created by ZhangRuiHao on 1/3/2018.
-//runtime resource load and cached manager
+//runtime resource load and cached manager,只从本地
 using UnityEngine;
 using System;
 using System.Collections.Generic;
@@ -20,6 +20,26 @@ public class ResourceManager
             this.assetBundle = assetBundle;
         }
     }
+    class ToLoadAssetCached
+    {
+        public string path;
+        public Action<AssetBundle> handler;
+        public ToLoadAssetCached(string path,Action<AssetBundle> action)
+        {
+            this.path = path;
+            handler = action;
+        }
+    }
+    private static ResourceManager _instance;
+    public static ResourceManager instance
+    {
+        get
+        {
+            if (_instance == null)
+                _instance = new ResourceManager();
+            return _instance;
+        }
+    }
     private ResourceLoader _resourceLoader;
     private Dictionary<string, AssetInfo> _resourceDictionary;
     private AssetBundleManifest _manifest;
@@ -27,16 +47,19 @@ public class ResourceManager
     {
         get { return _manifest != null; }
     }
+    private List<ToLoadAssetCached> _toLoadAssetCached;
     public ResourceManager()
     {
-        _resourceLoader = new ResourceLoader();
+        _resourceLoader = new ResourceLoader("");
         _resourceDictionary = new Dictionary<string, AssetInfo>();
+        _toLoadAssetCached = new List<ToLoadAssetCached>();
         LoadManifest();
     }
     public void GetAssetSync(string path,Action<AssetBundle> handler)
     {
         if(!canWork)
         {
+            _toLoadAssetCached.Add(new ToLoadAssetCached(path, handler));
             Debug.Log("resourceManager is not Working");
             return;
         }
@@ -88,7 +111,7 @@ public class ResourceManager
         if (callBack != null)
             callBack(assetBundle);
     }
- #if USE_ASSETBUNDLE_REFRENCE_COUNT
+#if USE_ASSETBUNDLE_REFRENCE_COUNT
     //写一个最底层脚本 ，所有脚本继承自这个，有一个实例化函数，自动调用引用增加，同时，脚本自行记录使用了多少次，脚本销毁时，自动减去所有引用
     public void AddReferenceCount(string path,uint addCount=1)
     {
@@ -106,6 +129,11 @@ public class ResourceManager
         _resourceLoader.LoadManiFest(Application.platform.ToString(), (manifest) =>
          {
              _manifest = manifest as AssetBundleManifest;
+             for (int i = 0; i < _toLoadAssetCached.Count; i++)
+             {
+                 ToLoadAssetCached toLoadAsset = _toLoadAssetCached[i];
+                 GetAssetSync(toLoadAsset.path, toLoadAsset.handler);
+             }
          });
     }
 }

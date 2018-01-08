@@ -15,11 +15,13 @@ public class ResourceLoader
     private List<LoadTask> _todoTasks;
     private List<LoadTask> _loadingTasks;
     private Dictionary<string, LoadTask> _taskDictionary;//url作为key,对应loadTask
-    public ResourceLoader()
+    private string _serverName;
+    public ResourceLoader(string serverName)
     {
         _todoTasks = new List<LoadTask>();
         _loadingTasks = new List<LoadTask>();
         _taskDictionary = new Dictionary<string, LoadTask>();
+        _serverName = serverName;
     }
     public void LoadRemoteAsset(string path, string md5, Action<byte[]> assetHandler)
     {
@@ -50,7 +52,6 @@ public class ResourceLoader
         for(int i=0;i<allPaths.Length;i++)
         {
             string path = allPaths[i];
-            int index = i;
             LoadLocalAssetBundle(path, (assetBundle) =>
              {
                  allAssets.Add(path, assetBundle);
@@ -73,7 +74,7 @@ public class ResourceLoader
     }
     public void LoadManiFest(string path, Action<AssetBundleManifest> assetHandler)
     {
-        string url = UrlCombine.GetLoadRul(path, false, Application.platform);
+        string url = UrlCombine.GetLoadRul(path, false,_serverName, Application.platform);
         AddTask(url, ETaskType.loadMainManifest, (loadTask) =>
         {
             if (assetHandler != null)
@@ -94,7 +95,7 @@ public class ResourceLoader
     }
     private void BeginTask(string path, ETaskType taskType,Action<LoadTask> finishedHandler,string md5="")
     {
-        string url = UrlCombine.GetLoadRul(path, false, Application.platform);
+        string url = UrlCombine.GetLoadRul(path, false,"", Application.platform);
         AddTask(url, taskType, (loadTask) =>
         {
             if (finishedHandler != null)
@@ -191,9 +192,9 @@ public class ResourceLoader
 public class UrlCombine
 {
     //每个平台的资源根目录都是枚举字符串
-    static public string GetLoadRul(string path, bool loadFromServer, RuntimePlatform platformType)//
+    static public string GetLoadRul(string path, bool loadFromServer, string serverName, RuntimePlatform platformType)//
     {
-        string serverName = "http:///myServer.com/";
+        //string serverName = "http:///myServer.com/";
         System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder(platformType.ToString(), 100);
         stringBuilder.Append(@"/");
         stringBuilder.Append(@path);

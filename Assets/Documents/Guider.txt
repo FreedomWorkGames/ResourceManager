@@ -1,0 +1,12 @@
+//服务器目录结构：
+
+平台名/所有资源
+
+所有资源是指：资源目录MD5列表，AssetBundleManifest,各种资源
+
+例如：ios平台
+
+ios/AssetsList,AssetBundleManifest,assetBundle1.....
+
+//资源列表文件
+统一使用UTF8格式

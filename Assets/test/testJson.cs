@@ -10,7 +10,7 @@ public class testJsonClass
 }
 public class testJsonClassList
 {
-    public testJsonClass[] list;
+    public List<testJsonClass> list;
     public testJsonClassList()
     {
         
@@ -38,7 +38,9 @@ public class testJson : MonoBehaviour
         tom.name = "tom";
         tom.age = "11";
         testJsonClassList list = new testJsonClassList();
-        list.list =  new testJsonClass[] { tom,tom};
+        list.list = new List<testJsonClass>();
+        list.list.Add(tom);
+        list.list.Add(tom);
         string jsonStr = JsonUtility.ToJson(list);
 
         TestFromJson(jsonStr);
