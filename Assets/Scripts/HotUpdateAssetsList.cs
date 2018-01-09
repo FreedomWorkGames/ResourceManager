@@ -18,4 +18,8 @@ public class HotUpdateAssetsList
 
     //所有资源列表
     public List<HotUpdateAssetItem> assetList;
+    public HotUpdateAssetsList()
+    {
+        assetList = new List<HotUpdateAssetItem>();
+    }
 }

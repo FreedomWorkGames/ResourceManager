@@ -46,10 +46,10 @@ public class ResourceLoader
         }
         );
     }
-    public void LoadLocalAssetBundle(string[] allPaths,Action<Dictionary<string,AssetBundle>> finishedHandler)
+    public void LoadLocalAssetBundle(string[] allPaths, Action<Dictionary<string, AssetBundle>> finishedHandler)
     {
         Dictionary<string, AssetBundle> allAssets = new Dictionary<string, AssetBundle>();
-        for(int i=0;i<allPaths.Length;i++)
+        for (int i = 0; i < allPaths.Length; i++)
         {
             string path = allPaths[i];
             LoadLocalAssetBundle(path, (assetBundle) =>
@@ -57,7 +57,7 @@ public class ResourceLoader
                  allAssets.Add(path, assetBundle);
                  //check all asset is finished
                  bool isAllFinished = true;
-                 for(int k=0;k<allPaths.Length;k++)
+                 for (int k = 0; k < allPaths.Length; k++)
                  {
                      string callBackPath = allPaths[k];
                      isAllFinished &= _taskDictionary.ContainsKey(callBackPath) && _taskDictionary[callBackPath].IsDone();
@@ -74,7 +74,7 @@ public class ResourceLoader
     }
     public void LoadManiFest(string path, Action<AssetBundleManifest> assetHandler)
     {
-        string url = UrlCombine.GetLoadRul(path, false,_serverName, Application.platform);
+        string url = UrlCombine.GetRul(path, false, _serverName, Application.platform);
         AddTask(url, ETaskType.loadMainManifest, (loadTask) =>
         {
             if (assetHandler != null)
@@ -93,9 +93,9 @@ public class ResourceLoader
             RemoveTask(loadTask);
         }
     }
-    private void BeginTask(string path, ETaskType taskType,Action<LoadTask> finishedHandler,string md5="")
+    private void BeginTask(string path, ETaskType taskType, Action<LoadTask> finishedHandler, string md5 = "")
     {
-        string url = UrlCombine.GetLoadRul(path, false,"", Application.platform);
+        string url = UrlCombine.GetRul(path, false, "", Application.platform);
         AddTask(url, taskType, (loadTask) =>
         {
             if (finishedHandler != null)
@@ -192,22 +192,33 @@ public class ResourceLoader
 public class UrlCombine
 {
     //每个平台的资源根目录都是枚举字符串
-    static public string GetLoadRul(string path, bool loadFromServer, string serverName, RuntimePlatform platformType)//
+    static public string GetRul(string path, bool loadFromServer, string serverName, RuntimePlatform platformType)//
     {
-        //string serverName = "http:///myServer.com/";
-        System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder(platformType.ToString(), 100);
-        stringBuilder.Append(@"/");
-        stringBuilder.Append(@path);
         if (loadFromServer)
         {
-            stringBuilder.Insert(0, serverName);
+            return GetServerlUrl(path, serverName, platformType);
         }
         else
         {
-            //客户端应该有一个表，根据path，可以查到在包内还是包外,热更新之后就会在包外了
-            bool isInApp = false;
-            stringBuilder.Insert(0, isInApp ? Application.dataPath : Application.persistentDataPath);
+            //客户端应该维护一个表，根据path，可以查到在包内还是包外,热更新之后就会在包外了
+            bool isInApp = true;
+            return GetLocalUrl(path, isInApp, platformType);
         }
+    }
+    static public string GetLocalUrl(string path, bool isInApp, RuntimePlatform platformType)
+    {
+        System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder(platformType.ToString(), 100);
+        stringBuilder.Append(@"/");
+        stringBuilder.Append(@path);
+        stringBuilder.Insert(0, isInApp ? Application.dataPath : Application.persistentDataPath);
+        return stringBuilder.ToString();
+    }
+    static public string GetServerlUrl(string path, string serverName, RuntimePlatform platformType)
+    {
+        System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder(platformType.ToString(), 100);
+        stringBuilder.Append(@"/");
+        stringBuilder.Append(@path);
+        stringBuilder.Insert(0, serverName);
         return stringBuilder.ToString();
     }
 }
