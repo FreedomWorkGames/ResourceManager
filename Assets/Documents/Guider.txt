@@ -10,3 +10,11 @@ ios/AssetsList,AssetBundleManifest,assetBundle1.....
 
 //资源列表文件
 统一使用UTF8格式
+
+几个特殊文件：
+资源服务器
+平台名/AssetsList   平台下最新资源名单
+
+客户端
+//包内： appDataPath/AssetsList   随下载包一起的本地资源名单
+//包外     persistentDataPath/AssetsList  本地最新资源名单               persistentDataPath/localAssetOutApp   包外已更新资源名单
