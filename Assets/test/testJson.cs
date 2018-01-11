@@ -7,13 +7,22 @@ public class testJsonClass
 {
     public string name;
     public string age;
+    public testJsonClass()
+    {
+
+    }
+    public testJsonClass(string name,string age)
+    {
+        this.name = name;
+        this.age = age;
+    }
 }
 public class testJsonClassList
 {
     public List<testJsonClass> list;
     public testJsonClassList()
     {
-        
+        list = new List<testJsonClass>();
     }
 }
 public class testJson : MonoBehaviour

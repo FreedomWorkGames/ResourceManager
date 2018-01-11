@@ -11,6 +11,10 @@ public class HotUpdateAssetItem
 {
     public string assetPath;//×ÊÔ´Ãû³Æ
     public string md5;
+    public HotUpdateAssetItem()
+    {
+
+    }
     public HotUpdateAssetItem(string path, string md5)
     {
         this.assetPath = path;
