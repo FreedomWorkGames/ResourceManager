@@ -11,19 +11,20 @@ public class BuildAssetBundlesWindow : Editor
 {
     const string buildAssetBundlesRoot = "BuildAssetBundles/";
     const string rawResourcesPath = "test/RawResources";
+    const string assetListName = "AssetList";
     [MenuItem(buildAssetBundlesRoot + "build")]
     static void BuildAssetBundles()
     {
         BuildTarget buildTarget = BuildTarget.StandaloneWindows64;
         string assetBundleDirectoryName = GetAssetBundleDirectoryName(buildTarget);
         string assetBundleFullPath = GetAssetBundleFullPath(assetBundleDirectoryName);
-        //if (!Directory.Exists(assetBundleFullPath))
-        //{
-        //    Directory.CreateDirectory(assetBundleFullPath);
-        //}
-        //BuildPipeline.BuildAssetBundles(assetBundleDirectoryName, BuildAssetBundleOptions.ForceRebuildAssetBundle, BuildTarget.StandaloneWindows64);
-        ////删除所有的多余manifest文件
-        //DeleteManifest(assetBundleFullPath);
+        if (!Directory.Exists(assetBundleFullPath))
+        {
+            Directory.CreateDirectory(assetBundleFullPath);
+        }
+        BuildPipeline.BuildAssetBundles(assetBundleDirectoryName, BuildAssetBundleOptions.ForceRebuildAssetBundle, BuildTarget.StandaloneWindows64);
+        //删除所有的多余manifest文件
+        DeleteManifest(assetBundleFullPath);
         CreateAssetList(assetBundleFullPath);
     }
     private static void DeleteManifest(string assetBundleFullPath)
@@ -51,6 +52,8 @@ public class BuildAssetBundlesWindow : Editor
             string fullName = fileInfo.FullName.Replace("\\", "/");
             string rootDirectoryPath = assetBundleFullPath.Replace("\\", "/");
             string assetName = fullName.Substring(rootDirectoryPath.Length + 1);
+            if (assetName == assetListName)
+                continue;
             if (assetName.Split('.').Length > 0)
             {
                 assetName = assetName.Split('.')[0];
@@ -63,7 +66,7 @@ public class BuildAssetBundlesWindow : Editor
             hotUpdateAssetsList.assetList.Add(hotUpdateAssetItem);
         }
         string assetListJsonStr = JsonUtility.ToJson(hotUpdateAssetsList);
-        string assetListPath = Path.Combine(assetBundleFullPath, "AssetList");
+        string assetListPath = Path.Combine(assetBundleFullPath, assetListName);
         File.WriteAllText(assetListPath, assetListJsonStr);
     }
     private static string GetAssetBundleFullPath(string assetBundleDirectoryName)
