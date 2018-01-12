@@ -20,6 +20,7 @@ public class MD5Builder  {
         }
         return sb.ToString();
     }
+
     public static string BuildMD5(string filePath)
     {
         FileStream file = new FileStream(filePath, System.IO.FileMode.Open);

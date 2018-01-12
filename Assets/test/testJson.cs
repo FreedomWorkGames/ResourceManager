@@ -43,14 +43,11 @@ public class testJson : MonoBehaviour
     }
     void TestToJson()
     {
-        testJsonClass tom = new testJsonClass();
-        tom.name = "tom";
-        tom.age = "11";
-        testJsonClassList list = new testJsonClassList();
-        list.list = new List<testJsonClass>();
-        list.list.Add(tom);
-        list.list.Add(tom);
-        string jsonStr = JsonUtility.ToJson(list);
+        HotUpdateAssetItem item = new HotUpdateAssetItem("123","456");
+        HotUpdateAssetsList hotUpdateAssetsList = new HotUpdateAssetsList();
+        hotUpdateAssetsList.assetList.Add(item);
+        hotUpdateAssetsList.assetList.Add(item);
+        string jsonStr = JsonUtility.ToJson(hotUpdateAssetsList);
 
         TestFromJson(jsonStr);
         Debug.Log("testToJson: " + jsonStr);

@@ -6,7 +6,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-[SerializeField]
+[System.Serializable]
 public class HotUpdateAssetItem
 {
     public string assetPath;//×ÊÔ´Ãû³Æ

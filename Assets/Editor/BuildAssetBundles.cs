@@ -55,11 +55,10 @@ public class BuildAssetBundlesWindow : Editor
             {
                 assetName = assetName.Split('.')[0];
             }
-            FileStream fileStream = fileInfo.Create();
-            byte[] data = new byte[fileStream.Length];
-            fileStream.Read(data, 0, data.Length);
-            fileStream.Close();
-            string md5 = MD5Builder.BuildMD5(data);
+            //StreamReader fileStream = fileInfo.OpenText();
+            //string fileStr = fileStream.ReadToEnd();
+            //fileStream.Close();
+            string md5 = MD5Builder.BuildMD5(fileInfo.FullName);
             HotUpdateAssetItem hotUpdateAssetItem = new HotUpdateAssetItem(assetName, md5);
             hotUpdateAssetsList.assetList.Add(hotUpdateAssetItem);
         }
