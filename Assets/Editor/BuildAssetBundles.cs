@@ -26,28 +26,35 @@ public class BuildAssetBundlesWindow : Editor
         //删除所有的多余manifest文件
         DeleteManifest(assetBundleFullPath);
         CreateAssetList(assetBundleFullPath);
+        //每次打包默认，更新资源到包内，后期可以做成可选的
+        CopyToApp(assetBundleFullPath);
     }
     private static void DeleteManifest(string assetBundleFullPath)
     {
+        EditorUtility.DisplayProgressBar("DeleteManifest", "progress: " , 0);
         string[] allManifestPath = Directory.GetFiles(assetBundleFullPath, "*.manifest", SearchOption.AllDirectories);
         //string ingoreManifest = assetBundleDirectoryName + ".manifest";
         for (int i = 0; i < allManifestPath.Length; i++)
         {
+            EditorUtility.DisplayProgressBar("DeleteManifest", "progress: ", 1f * i/allManifestPath.Length);
             string manifestPath = allManifestPath[i];
             //if (!manifestPath.EndsWith(ingoreManifest))
             //{
             File.Delete(manifestPath);
             //}
         }
+        EditorUtility.ClearProgressBar();
     }
     private static void CreateAssetList(string assetBundleFullPath)
     {
+        EditorUtility.DisplayProgressBar("CreateAssetsList", "progress: ", 0);
         //读取所有文件，并创建md5文件
         HotUpdateAssetsList hotUpdateAssetsList = new HotUpdateAssetsList();
         DirectoryInfo directoryInfo = new DirectoryInfo(assetBundleFullPath);
         FileInfo[] allAsset = directoryInfo.GetFiles();
         for (int i = 0; i < allAsset.Length; i++)
         {
+            EditorUtility.DisplayProgressBar("CreateAssetsList", "progress: ", 1f *i /allAsset.Length);
             FileInfo fileInfo = allAsset[i];
             string fullName = fileInfo.FullName.Replace("\\", "/");
             string rootDirectoryPath = assetBundleFullPath.Replace("\\", "/");
@@ -65,9 +72,30 @@ public class BuildAssetBundlesWindow : Editor
             HotUpdateAssetItem hotUpdateAssetItem = new HotUpdateAssetItem(assetName, md5);
             hotUpdateAssetsList.assetList.Add(hotUpdateAssetItem);
         }
+        EditorUtility.ClearProgressBar();
+        EditorUtility.DisplayProgressBar("Write \"CreateAssetsList to file\" ", "progress: ", 0);
         string assetListJsonStr = JsonUtility.ToJson(hotUpdateAssetsList);
         string assetListPath = Path.Combine(assetBundleFullPath, assetListName);
         File.WriteAllText(assetListPath, assetListJsonStr);
+        EditorUtility.ClearProgressBar();
+    }
+    private static void CopyToApp(string srcPath)
+    {
+        ClearDictory(srcPath);
+        EditorUtility.DisplayProgressBar("Copy Assets to App", "progress... ", 0);
+        string appStreamingAssetsPath = Application.streamingAssetsPath;
+        FolderHelper.Copy(srcPath, appStreamingAssetsPath,true);
+        EditorUtility.ClearProgressBar();
+        AssetDatabase.Refresh();
+    }
+    private static void CopyToServer(string srcPath)
+    {
+
+    }
+    private static void ClearDictory(string path)
+    {
+        FolderHelper.ClearDictory(path, true);
+        AssetDatabase.Refresh();
     }
     private static string GetAssetBundleFullPath(string assetBundleDirectoryName)
     {
@@ -84,11 +112,11 @@ public class BuildAssetBundlesWindow : Editor
         if (System.IO.Directory.Exists(resourceRootPath))
         {
             var directoryInfo = new System.IO.DirectoryInfo(resourceRootPath);
-            EditorUtility.DisplayProgressBar("设置AssetName", "正在设置AssetName...", 0);
+            EditorUtility.DisplayProgressBar("Set AssetName", "Progress", 0);
             var allFiles = directoryInfo.GetFiles("*", System.IO.SearchOption.AllDirectories);
             for (int i = 0; i < allFiles.Length; i++)
             {
-                EditorUtility.DisplayProgressBar("设置AssetName", "正在设置AssetName...", 1f * i / allFiles.Length);
+                EditorUtility.DisplayProgressBar("Set AssetName", "Progress:", 1f * i / allFiles.Length);
                 var fileInfo = allFiles[i];
                 if (!fileInfo.Name.EndsWith(".meta"))
                 {
@@ -110,6 +138,14 @@ public class BuildAssetBundlesWindow : Editor
             AssetDatabase.RemoveUnusedAssetBundleNames();
         }
     }
-
-
+    [MenuItem(buildAssetBundlesRoot + "Clear StreamingAssets")]
+    static void ClearStreamingAssets()
+    {
+        ClearDictory(Application.streamingAssetsPath);
+    }
+    [MenuItem(buildAssetBundlesRoot + "Clear ServerAssets")]
+    static void ClearServerAssets()
+    {
+        //ClearDictory(Application.streamingAssetsPath);
+    }
 }

@@ -210,7 +210,8 @@ public class UrlCombine
         System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder(platformType.ToString(), 100);
         stringBuilder.Append(@"/");
         stringBuilder.Append(@path);
-        stringBuilder.Insert(0, isInApp ? Application.dataPath : Application.persistentDataPath);
+        stringBuilder.Insert(0, @"/");
+        stringBuilder.Insert(0, isInApp ? Application.streamingAssetsPath : Application.persistentDataPath);
         return stringBuilder.ToString();
     }
     static public string GetServerlUrl(string path, string serverName, RuntimePlatform platformType)
@@ -218,6 +219,7 @@ public class UrlCombine
         System.Text.StringBuilder stringBuilder = new System.Text.StringBuilder(platformType.ToString(), 100);
         stringBuilder.Append(@"/");
         stringBuilder.Append(@path);
+        stringBuilder.Insert(0, @"/");
         stringBuilder.Insert(0, serverName);
         return stringBuilder.ToString();
     }
